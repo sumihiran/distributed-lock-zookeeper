@@ -1,20 +1,13 @@
 plugins {
     id("java-library")
+    id("checkstyle")
     id("maven-publish")
-}
-
-group = "io.github.sumihiran"
-
-repositories {
-    mavenCentral()
 }
 
 dependencies {
     testImplementation(libs.junit.jupiter)
-
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
-
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -27,9 +20,11 @@ java {
     }
 }
 
-
+checkstyle {
+    toolVersion = "9.3"
+    configDirectory.set(file("config/checkstyle"))
+}
 
 tasks.named<Test>("test") {
-    // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }
