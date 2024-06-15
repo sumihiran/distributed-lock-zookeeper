@@ -1,6 +1,7 @@
 package io.github.sumihiran.lock.zookeeper;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.listen.Listenable;
 import org.apache.curator.framework.recipes.locks.InterProcessLock;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
@@ -20,6 +21,8 @@ import static org.mockito.Mockito.*;
  * @author Nuwan Bandara
  */
 class ZookeeperDistributedLockTest {
+
+    static String lockNodePath = "/path/to/lock";
 
     CuratorFramework client;
     InterProcessLock lock;
@@ -41,7 +44,7 @@ class ZookeeperDistributedLockTest {
         when(lock.acquire(anyLong(), any(TimeUnit.class))).thenReturn(true);
 
         // Act
-        Acquisition handle = distributedLock.acquire("test-key");
+        Acquisition handle = distributedLock.acquire(lockNodePath);
         handle.release();
 
         // Assert
@@ -56,7 +59,7 @@ class ZookeeperDistributedLockTest {
         when(lock.acquire(anyLong(), any(TimeUnit.class))).thenReturn(true);
 
         // Act
-        try (Acquisition handle = distributedLock.acquire("test-key")) {
+        try (Acquisition handle = distributedLock.acquire(lockNodePath)) {
             assertInstanceOf(AutoCloseable.class, handle);
             assertTrue(handle.isAcquired());
         }
@@ -73,10 +76,10 @@ class ZookeeperDistributedLockTest {
         // Act & Assert
         ZookeeperLockAcquisitionException exception = assertThrows(
             ZookeeperLockAcquisitionException.class,
-            () -> distributedLock.acquire("test-key")
+            () -> distributedLock.acquire(lockNodePath)
         );
 
-        assertEquals("Failed to acquire lock for key: test-key", exception.getMessage());
+        assertEquals("Failed to acquire lock for key: /path/to/lock", exception.getMessage());
     }
 
     @Test
@@ -87,11 +90,11 @@ class ZookeeperDistributedLockTest {
         // Act & Assert
         ZookeeperLockAcquisitionException exception = assertThrows(
             ZookeeperLockAcquisitionException.class,
-            () -> distributedLock.acquire("test-key", Duration.ofSeconds(1))
+            () -> distributedLock.acquire(lockNodePath, Duration.ofSeconds(1))
         );
 
         assertEquals(
-            "Failed to acquire lock for key: test-key", exception.getMessage());
+            "Failed to acquire lock for key: /path/to/lock", exception.getMessage());
     }
 
     @Test
@@ -101,7 +104,7 @@ class ZookeeperDistributedLockTest {
         doThrow(new Exception("Test exception")).when(lock).release();
 
         // Act
-        Acquisition handle = distributedLock.acquire("test-key");
+        Acquisition handle = distributedLock.acquire(lockNodePath);
         Exception exception = assertThrows(ZookeeperLockReleaseException.class, handle::release);
 
         // Assert

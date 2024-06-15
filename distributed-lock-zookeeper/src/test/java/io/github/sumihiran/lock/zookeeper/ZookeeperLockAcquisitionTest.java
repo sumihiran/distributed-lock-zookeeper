@@ -1,6 +1,7 @@
 package io.github.sumihiran.lock.zookeeper;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.listen.Listenable;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.apache.curator.framework.state.ConnectionState;
@@ -32,7 +33,7 @@ class ZookeeperLockAcquisitionTest {
         stateListenable = mock(Listenable.class);
         when(client.getConnectionStateListenable()).thenReturn(stateListenable);
 
-        lockAcquisition = new ZookeeperLockAcquisition(client, "test-key", lock);
+        lockAcquisition = new ZookeeperLockAcquisition(client, "/test-key", lock);
 
         assertTrue(lockAcquisition.isAcquired());
     }
