@@ -31,8 +31,30 @@ checkstyle {
     configDirectory.set(file("config/checkstyle"))
 }
 
+sourceSets {
+    create("integrationTest") {
+        java.srcDir(file("src/test-it/java"))
+        resources.srcDir(file("src/test-it/resources"))
+        compileClasspath += sourceSets["main"].output + configurations["testRuntimeClasspath"]
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
 tasks.named<Test>("test") {
     useJUnitPlatform()
+}
+
+tasks.register<Test>("integrationTest") {
+    description = "Runs the integration tests."
+    group = "verification"
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+
+    useJUnitPlatform()
+}
+
+tasks.named("check") {
+    dependsOn(tasks.named("test"), tasks.named("integrationTest"))
 }
 
 publishing {
