@@ -7,4 +7,6 @@
 <suppressions>
     <suppress checks="AvoidStarImport" files=".*"
               message="Using the '.*' form of import should be avoided - (org.junit.jupiter.api.Assertions\.\*|org.mockito.Mockito\.\*)"/>
+    <suppress checks="SummaryJavadoc" files="^.*(Test|IT)\.java$"
+              message="Summary javadoc is missing"/>
 </suppressions>

@@ -64,6 +64,7 @@
             <property name="customImportOrderRules" value="THIRD_PARTY_PACKAGE###SPECIAL_IMPORTS###STANDARD_JAVA_PACKAGE###STATIC"/>
             <property name="sortImportsInGroupAlphabetically" value="true"/>
             <property name="standardPackageRegExp" value="^(java|javax)\."/>
+            <property name="specialImportsRegExp" value="^io\.github\.sumihiran\."/>
             <property name="separateLineBetweenGroups" value="true"/>
         </module>
         <module name="OneTopLevelClass"/>

@@ -11,8 +11,13 @@ plugins {
 version = versioning.info.display
 
 dependencies {
+    implementation("org.apache.curator:curator-recipes:5.5.0")
+
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    testImplementation("org.mockito:mockito-core:4.11.0")
+    testImplementation("ch.qos.logback:logback-classic:1.3.14")
 }
 
 java {
