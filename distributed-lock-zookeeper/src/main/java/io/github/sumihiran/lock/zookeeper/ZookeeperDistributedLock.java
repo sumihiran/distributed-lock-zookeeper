@@ -1,6 +1,7 @@
 package io.github.sumihiran.lock.zookeeper;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.locks.InterProcessLock;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.slf4j.Logger;
@@ -64,8 +65,10 @@ public class ZookeeperDistributedLock {
      * @throws ZookeeperLockAcquisitionException if the lock could not be acquired within the timeout
      */
     public Acquisition acquire(String key, Duration timeout) throws ZookeeperLockAcquisitionException {
-        InterProcessLock lock = lockFunction.apply(key);
         try {
+            throwIfClientNotStarted();
+            InterProcessLock lock = lockFunction.apply(key);
+
             boolean acquired = lock.acquire(timeout.toMillis(), TimeUnit.MILLISECONDS);
             if (acquired) {
                 LOGGER.debug("Lock acquired for key: {}", key);
@@ -78,6 +81,19 @@ public class ZookeeperDistributedLock {
         } catch (Exception e) {
             LOGGER.error("Failed to acquire lock for key: {}", key, e);
             throw new ZookeeperLockAcquisitionException("Failed to acquire lock for key: " + key, e);
+        }
+    }
+
+    /**
+     * Throws an IllegalStateException if the CuratorFramework client is not started.
+     *
+     * @throws IllegalStateException if the client is not started
+     */
+    private void throwIfClientNotStarted() {
+        CuratorFrameworkState currentState = client.getState();
+        if (currentState != CuratorFrameworkState.STARTED) {
+            LOGGER.error("CuratorFramework client is not started. Current state: {}", currentState);
+            throw new IllegalStateException("CuratorFramework client is not started");
         }
     }
 }

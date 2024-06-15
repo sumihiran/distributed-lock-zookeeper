@@ -33,6 +33,7 @@ class ZookeeperDistributedLockTest {
         client = mock(CuratorFramework.class);
         Listenable stateListenable = mock(Listenable.class);
         when(client.getConnectionStateListenable()).thenReturn(stateListenable);
+        when(client.getState()).thenReturn(CuratorFrameworkState.STARTED);
 
         lock = mock(InterProcessSemaphoreMutex.class);
         distributedLock = new ZookeeperDistributedLock(client, path -> lock);
@@ -110,4 +111,25 @@ class ZookeeperDistributedLockTest {
         // Assert
         assertEquals("Failed to release lock", exception.getMessage());
     }
+
+    @Test
+    void shouldThrowIllegalStateExceptionWhenClientNotStarted() throws Exception {
+        // Arrange
+        when(client.getState()).thenReturn(CuratorFrameworkState.LATENT);
+        when(lock.acquire(anyLong(), any(TimeUnit.class))).thenReturn(true);
+
+        // Act & Assert
+        ZookeeperLockAcquisitionException exception =
+            assertThrows(ZookeeperLockAcquisitionException.class, () -> distributedLock.acquire("/test-key"));
+
+        assertInstanceOf(IllegalStateException.class, exception.getCause());
+
+        IllegalStateException cause = (IllegalStateException) exception.getCause();
+        assertEquals(
+            "CuratorFramework client is not started",
+            cause.getMessage()
+        );
+    }
+
+
 }

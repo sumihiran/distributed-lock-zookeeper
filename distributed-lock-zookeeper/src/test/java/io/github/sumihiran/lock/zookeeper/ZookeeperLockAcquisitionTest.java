@@ -32,6 +32,7 @@ class ZookeeperLockAcquisitionTest {
         lock = mock(InterProcessSemaphoreMutex.class);
         stateListenable = mock(Listenable.class);
         when(client.getConnectionStateListenable()).thenReturn(stateListenable);
+        when(client.getState()).thenReturn(CuratorFrameworkState.STARTED);
 
         lockAcquisition = new ZookeeperLockAcquisition(client, "/test-key", lock);
 
