@@ -5,24 +5,27 @@ package io.github.sumihiran.lock.zookeeper.exceptions;
  *
  * @author Nuwan Bandara
  */
-public final class ZookeeperLockReleaseException extends ZookeeperDistributedLockException {
+public final class ZookeeperLockReleaseException extends Exception {
+
+    private final String key;
 
     /**
-     * Initialize the exception with given {@code message}.
+     * Initialize the exception with given lock {@code key} and {@code message}.
      *
+     * @param key     the lock key
      * @param message a message describing the cause of the exception
      */
-    public ZookeeperLockReleaseException(String message) {
+    public ZookeeperLockReleaseException(String key, String message) {
         super(message);
+        this.key = key;
     }
 
     /**
-     * Initialize the exception with given {@code message} and {@code cause}.
+     * Returns the lock key associated with this exception.
      *
-     * @param message a message describing the cause of the exception
-     * @param cause   the cause of this exception
+     * @return the lock key
      */
-    public ZookeeperLockReleaseException(String message, Throwable cause) {
-        super(message, cause);
+    public String getKey() {
+        return key;
     }
 }

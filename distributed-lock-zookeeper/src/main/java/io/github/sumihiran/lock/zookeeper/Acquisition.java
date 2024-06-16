@@ -1,5 +1,7 @@
 package io.github.sumihiran.lock.zookeeper;
 
+import io.github.sumihiran.lock.zookeeper.exceptions.ZookeeperLockReleaseException;
+
 /**
  * Represents an acquired lock that can be released.
  *
@@ -9,8 +11,13 @@ public interface Acquisition extends AutoCloseable {
 
     /**
      * Releases the acquired lock.
+     *
+     * <p>The lock release is idempotent when successful.</p>
+     *
+     *  @throws ZookeeperLockReleaseException if the lock has been lost and cannot be released
+     *  @throws Exception if there is an error releasing the lock (ZK errors, connection interruptions)
      */
-    void release();
+    void release() throws Exception;
 
     /**
      * Checks if the lock is still acquired.
@@ -20,7 +27,7 @@ public interface Acquisition extends AutoCloseable {
     boolean isAcquired();
 
     @Override
-    default void close() {
+    default void close() throws Exception {
         release();
     }
 }

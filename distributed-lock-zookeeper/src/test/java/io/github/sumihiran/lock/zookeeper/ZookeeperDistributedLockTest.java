@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.github.sumihiran.lock.zookeeper.exceptions.ZookeeperLockAcquisitionException;
-import io.github.sumihiran.lock.zookeeper.exceptions.ZookeeperLockReleaseException;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -96,20 +95,6 @@ class ZookeeperDistributedLockTest {
 
         assertEquals(
             "Failed to acquire lock for key: /path/to/lock", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowLockReleaseExceptionWhenReleaseFails() throws Exception {
-        // Arrange
-        when(lock.acquire(anyLong(), any(TimeUnit.class))).thenReturn(true);
-        doThrow(new Exception("Test exception")).when(lock).release();
-
-        // Act
-        Acquisition handle = distributedLock.acquire(lockNodePath);
-        Exception exception = assertThrows(ZookeeperLockReleaseException.class, handle::release);
-
-        // Assert
-        assertEquals("Failed to release lock", exception.getMessage());
     }
 
     @Test

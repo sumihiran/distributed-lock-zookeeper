@@ -18,13 +18,13 @@ import static org.mockito.Mockito.*;
 /**
  * @author Nuwan Bandara
  */
-class ZookeeperLockAcquisitionTest {
+class ZookeeperMonitoredLockAcquisitionTest {
 
     CuratorFramework client;
     InterProcessSemaphoreMutex lock;
     Listenable<ConnectionStateListener> stateListenable;
 
-    ZookeeperLockAcquisition lockAcquisition;
+    ZookeeperMonitoredLockAcquisition lockAcquisition;
 
     @BeforeEach
     void setUp() {
@@ -34,7 +34,7 @@ class ZookeeperLockAcquisitionTest {
         when(client.getConnectionStateListenable()).thenReturn(stateListenable);
         when(client.getState()).thenReturn(CuratorFrameworkState.STARTED);
 
-        lockAcquisition = new ZookeeperLockAcquisition(client, "/test-key", lock);
+        lockAcquisition = new ZookeeperMonitoredLockAcquisition(client, "/test-key", lock);
 
         assertTrue(lockAcquisition.isAcquired());
     }
@@ -64,6 +64,19 @@ class ZookeeperLockAcquisitionTest {
     }
 
     @Test
+    void shouldReleaseLockIdempotent() throws Exception {
+        // Act
+        lockAcquisition.release();
+        lockAcquisition.release();
+
+        // Assert
+        verify(lock, times(1)).release();
+        assertFalse(lockAcquisition.isAcquired());
+        verify(stateListenable, times(1)).removeListener(any(ConnectionStateListener.class));
+    }
+
+
+    @Test
     void shouldConsiderLockLostWhenConnectionStateIsLost() {
         // Arrange
         ArgumentCaptor<ConnectionStateListener> listenerCaptor = ArgumentCaptor.forClass(ConnectionStateListener.class);
@@ -75,6 +88,7 @@ class ZookeeperLockAcquisitionTest {
 
         // Assert
         assertFalse(lockAcquisition.isAcquired());
+        assertTrue(lockAcquisition.isLockLost());
     }
 
     @Test
@@ -89,6 +103,7 @@ class ZookeeperLockAcquisitionTest {
 
         // Assert
         assertFalse(lockAcquisition.isAcquired());
+        assertTrue(lockAcquisition.isLockLost());
     }
 
     @Test
@@ -103,12 +118,14 @@ class ZookeeperLockAcquisitionTest {
 
         // Assert lock is lost
         assertFalse(lockAcquisition.isAcquired());
+        assertTrue(lockAcquisition.isLockLost());
 
         // Act: Simulate reconnection
         listener.stateChanged(client, ConnectionState.RECONNECTED);
 
         // Assert lock remains lost
         assertFalse(lockAcquisition.isAcquired());
+        assertTrue(lockAcquisition.isLockLost());
     }
 
 
@@ -118,7 +135,23 @@ class ZookeeperLockAcquisitionTest {
         doThrow(new Exception("Test exception")).when(lock).release();
 
         // Act & Assert
-        Exception exception = assertThrows(ZookeeperLockReleaseException.class, () -> lockAcquisition.release());
-        assertEquals("Failed to release lock", exception.getMessage());
+        assertThrows(Exception.class, () -> lockAcquisition.release());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenReleasingLostLock() {
+        // Arrange
+        ArgumentCaptor<ConnectionStateListener> listenerCaptor = ArgumentCaptor.forClass(ConnectionStateListener.class);
+        verify(client.getConnectionStateListenable()).addListener(listenerCaptor.capture());
+        ConnectionStateListener listener = listenerCaptor.getValue();
+        listener.stateChanged(client, ConnectionState.LOST);
+
+        // Act & Assert
+        ZookeeperLockReleaseException exception =
+            assertThrows(ZookeeperLockReleaseException.class, () -> lockAcquisition.release());
+
+        assertTrue(lockAcquisition.isLockLost());
+        assertFalse(lockAcquisition.isAcquired());
+        assertEquals("/test-key", exception.getKey());
     }
 }

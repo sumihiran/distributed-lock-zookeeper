@@ -72,7 +72,7 @@ public class ZookeeperDistributedLock {
             boolean acquired = lock.acquire(timeout.toMillis(), TimeUnit.MILLISECONDS);
             if (acquired) {
                 LOGGER.debug("Lock acquired for key: {}", key);
-                return new ZookeeperLockAcquisition(client, key, lock);
+                return new ZookeeperMonitoredLockAcquisition(client, key, lock);
             } else {
                 LOGGER.warn("Failed to acquire lock for key: {} within timeout: {}", key, timeout);
                 throw new ZookeeperLockAcquisitionException(
