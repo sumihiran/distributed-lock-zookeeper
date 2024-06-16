@@ -51,4 +51,42 @@ class ZookeeperMonitoredLockAcquisitionIT extends AbstractZookeeperIntegrationTe
         assertTrue(zkAcquisition.isLockLost());
         assertThrows(ZookeeperLockReleaseException.class, zkAcquisition::release);
     }
+
+    @Test
+    void shouldReacquireLockAfterSessionExpiration() throws Exception {
+        // Arrange
+        CuratorFramework client = CuratorFrameworkFactory.builder()
+            .connectString(getZkConnectionString())
+            .retryPolicy(new RetryOneTime(0))
+            .sessionTimeoutMs(5000)
+            .build();
+        client.start();
+        ZookeeperDistributedLock distributedLock = new ZookeeperDistributedLock(client);
+
+        // Act: Acquire the lock
+        Acquisition acquisition = distributedLock.acquire("/test-lock");
+
+        // Assert initial acquisition
+        assertNotNull(acquisition);
+        assertTrue(acquisition.isAcquired());
+
+        // Act: simulate session expiration
+        client.getZookeeperClient().getZooKeeper().getTestable().injectSessionExpiration();
+
+        // Give some time for session expiration to be processed
+        Thread.sleep(6000);
+
+        // Assert lock is lost
+        assertFalse(acquisition.isAcquired());
+
+        // Act: Re-establish the session and try to reacquire the lock
+        Acquisition newAcquisition = distributedLock.acquire("/test-lock");
+
+        // Assert new acquisition
+        assertNotNull(newAcquisition);
+        assertTrue(newAcquisition.isAcquired());
+
+        // Cleanup
+        newAcquisition.release();
+    }
 }

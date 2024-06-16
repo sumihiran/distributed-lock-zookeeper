@@ -10,7 +10,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-class ZookeeperDistributedLockIT extends AbstractZookeeperIntegrationTest{
+class ZookeeperDistributedLockIT extends AbstractZookeeperIntegrationTest {
 
     @Test
     void shouldAcquireAndReleaseLockSuccessfully() throws IOException {
