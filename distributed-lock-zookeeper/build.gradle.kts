@@ -19,6 +19,8 @@ dependencies {
     testImplementation(platform("org.testcontainers:testcontainers-bom:1.19.8"))
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
+
+    testImplementation("eu.rekawek.toxiproxy:toxiproxy-java:2.1.7")
     testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("ch.qos.logback:logback-classic:1.3.14")
 }
